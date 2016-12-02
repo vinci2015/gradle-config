@@ -42,8 +42,12 @@ android {
     }
     buildTypes {
         release {
+            buildConfigField "boolean", "showLog","false"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug{
+            buildConfigField "boolean", "showLog","true"
         }
     }
     productFlavors{
@@ -99,6 +103,4 @@ task myBuild<<{
     updateVersionNum()
 }
 myBuild {}.dependsOn 'assembleRelease'
-
-
 
