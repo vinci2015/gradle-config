@@ -1,0 +1,104 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "24.0.0"
+
+    def versionNum = getVersionNum()
+
+    defaultConfig {
+        applicationId "com.example.administrator.myapplication"
+        minSdkVersion 19
+        targetSdkVersion 23
+        versionCode versionNum
+        versionName versionNum.toString()
+    }
+    signingConfigs{
+        def Properties localProperties = new Properties()
+        localProperties.load(new FileInputStream(file('../local.properties')))
+        def Properties keyProperties = new Properties()
+        // 如果读取不到'keystore.props.file'属性，就使用debug keystore
+        if(localProperties['keystore.props.file']){
+            keyProperties.load(new FileInputStream(file(localProperties['keystore.props.file'])))
+        }else{
+            keyProperties['store'] = '../buildsystem/debug.keystore'
+            keyProperties['alias'] = 'android'
+            keyProperties['storePass'] = 'androiddebugkey'
+            keyProperties['pass'] = 'android'
+        }
+        debug{
+            storeFile file(keyProperties['store'])
+            keyAlias  keyProperties['alias']
+            storePassword keyProperties['storePass']
+            keyPassword keyProperties['pass']
+        }
+        release{
+            assert localProperties['keystore.props.file'];
+            storeFile file(keyProperties['store'])
+            keyAlias keyProperties['alias']
+            storePassword keyProperties['storePass']
+            keyPassword keyProperties['pass']
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    productFlavors{
+        GooglePlay {
+            manifestPlaceholders = [UMENG_CHANNEL: "GooglePlay"]
+        }
+        Baidu {
+            manifestPlaceholders = [UMENG_CHANNEL: "Baidu"]
+        }
+        Wandoujia {
+            manifestPlaceholders = [UMENG_CHANNEL: "Wandoujia"]
+        }
+        Xiaomi {
+            manifestPlaceholders = [UMENG_CHANNEL: "Xiaomi"]
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+}
+//获取版本号
+def getVersionNum(){
+    def versionfile = file('version.properties')
+    if(versionfile.exists()){
+        def Properties versionProp = new Properties()
+        versionProp.load(new FileInputStream(versionfile))
+        def versionNumber = versionProp['version.num'].toInteger()
+        println "current version number is $versionNumber"
+        return versionNumber
+    }else{
+        throw new GradleException("getVersionNum failed,cant find version.properties file !")
+    }
+}
+def updateVersionNum(){
+    def versionfile = file('version.properties')
+    if(versionfile.exists()){
+        def Properties versionProp = new Properties()
+        versionProp.load(new FileInputStream(versionfile))
+        def versionNumber = versionProp['version.num'].toInteger()
+        versionNumber++
+        versionProp['version.num'] = versionNumber.toString()
+        versionProp.store(versionfile.newWriter(),null)
+        println "update version number to $versionNumber"
+    }else{
+        throw new GradleException("updateVersionNum failed,cant find version.properties file !")
+    }
+}
+task myBuild<<{
+    println 'start to build ---'
+    updateVersionNum()
+}
+myBuild {}.dependsOn 'assembleRelease'
+
+
+
